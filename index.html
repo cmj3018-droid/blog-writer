@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>잔망차차 블로그 작성기</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, "Noto Sans KR", sans-serif;
+      background: #f7f7f7;
+      color: #333;
+    }
+
+    .container {
+      width: min(1100px, 94%);
+      margin: 30px auto 60px;
+    }
+
+    h1 {
+      margin-bottom: 8px;
+      font-size: 30px;
+    }
+
+    .subtitle {
+      color: #777;
+      margin-bottom: 25px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 3px 15px rgba(0,0,0,0.06);
+    }
+
+    .card h2 {
+      margin-top: 0;
+      font-size: 20px;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin: 16px 0 7px;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 15px;
+      outline: none;
+    }
+
+    input:focus,
+    textarea:focus {
+      border-color: #999;
+    }
+
+    textarea {
+      min-height: 110px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .photo-area {
+      border: 2px dashed #ddd;
+      border-radius: 14px;
+      padding: 25px;
+      text-align: center;
+      background: #fafafa;
+    }
+
+    .photo-area input {
+      border: 0;
+      padding: 10px;
+      background: white;
+    }
+
+    .photo-count {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+
+    .preview {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .preview img {
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 10px;
+    }
+
+    button {
+      width: 100%;
+      border: 0;
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+      background: #333;
+      color: white;
+    }
+
+    button:disabled {
+      background: #aaa;
+      cursor: wait;
+    }
+
+    .status {
+      margin-top: 15px;
+      padding: 14px;
+      border-radius: 10px;
+      background: #f1f1f1;
+      display: none;
+      line-height: 1.6;
+    }
+
+    .result {
+      display: none;
+    }
+
+    .result textarea {
+      min-height: 700px;
+      font-size: 15px;
+      line-height: 1.8;
+    }
+
+    .copy-button {
+      margin-top: 12px;
+      background: #555;
+    }
+
+    .tip {
+      background: #fff8ed;
+      border-radius: 10px;
+      padding: 12px;
+      margin-top: 12px;
+      color: #666;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 700px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h1>✨ 잔망차차 블로그 작성기</h1>
+  <div class="subtitle">
+    사진과 방문 정보를 넣으면 잔망차차 스타일의 네이버 맛집 후기를 만들어드려요 💕
+  </div>
+
+
+  <!-- 기본 방문 정보 -->
+  <div class="card">
+
+    <h2>📍 방문 정보</h2>
+
+    <div class="grid">
+
+      <div>
+        <label>가게 이름</label>
+        <input
+          id="storeName"
+          type="text"
+          placeholder="예: 도로시파스타 배곧"
+        >
+      </div>
+
+      <div>
+        <label>위치</label>
+        <input
+          id="location"
+          type="text"
+          placeholder="예: 시흥 배곧"
+        >
+      </div>
+
+      <div>
+        <label>방문일</label>
+        <input
+          id="visitDate"
+          type="date"
+        >
+      </div>
+
+      <div>
+        <label>최소 글자 수</label>
+        <input
+          id="minLength"
+          type="number"
+          value="1800"
+          min="1000"
+        >
+      </div>
+
+    </div>
+
+
+    <label>📝 방문 메모</label>
+
+    <textarea
+      id="memo"
+      placeholder="먹은 메뉴, 맛, 분위기, 좋았던 점, 아쉬웠던 점, 방문하면서 느낀 점 등을 자유롭게 적어주세요."
+    ></textarea>
+
+  </div>
+
+
+  <!-- 체험단 키워드 -->
+  <div class="card">
+
+    <h2>🔎 체험단 / 검색 키워드</h2>
+
+    <textarea
+      id="keywords"
+      placeholder="예:
+메인 키워드: 배곧 파스타 맛집
+서브 키워드: 배곧 데이트, 배곧 양식
+가게 키워드: 도로시파스타 배곧
+메인 키워드 5회 자연스럽게 사용"
+    ></textarea>
+
+    <div class="tip">
+      💡 체험단 키워드를 그대로 붙여넣어 주세요.
+      키워드를 억지로 반복하지 않고 글 전체에 자연스럽게 분산해서 작성합니다.
+    </div>
+
+  </div>
+
+  <!-- 사진 -->
+  <div class="card">
+
+    <h2>📸 사진 업로드</h2>
+
+    <div class="photo-area">
+
+      <input
+        id="photos"
+        type="file"
+        accept="image/*"
+        multiple
+      >
+
+      <div class="photo-count" id="photoCount">
+        선택된 사진: 0장
+      </div>
+
+      <div class="tip">
+        📌 최대 20장까지 넣을 수 있어요.<br>
+        사진은 자동으로 5장씩 나누어 분석합니다.
+      </div>
+
+    </div>
+
+    <div
+      class="preview"
+      id="preview"
+    ></div>
+
+  </div>
+
+
+  <!-- 생성 버튼 -->
+  <div class="card">
+
+    <button
+      id="generateButton"
+      onclick="generateBlog()"
+    >
+      ✨ 블로그 초안 생성하기
+    </button>
+
+    <div
+      class="status"
+      id="status"
+    ></div>
+
+  </div>
+
+
+  <!-- 결과 -->
+  <div
+    class="card result"
+    id="resultCard"
+  >
+
+    <h2>📝 생성된 블로그 초안</h2>
+
+    <textarea
+      id="resultText"
+      readonly
+    ></textarea>
+
+    <button
+      class="copy-button"
+      onclick="copyResult()"
+    >
+      📋 글 전체 복사하기
+    </button>
+
+  </div>
+
+</div>
+
+
+<script>
+
+  // ======================================================
+  // 사진 선택
+  // ======================================================
+
+  const photoInput = document.getElementById("photos");
+  const preview = document.getElementById("preview");
+  const photoCount = document.getElementById("photoCount");
+
+  let selectedPhotos = [];
+
+
+  // 사진 선택 시
+  photoInput.addEventListener("change", function(event) {
+
+    selectedPhotos = Array.from(event.target.files);
+
+    if (selectedPhotos.length > 20) {
+
+      alert("사진은 최대 20장까지 선택할 수 있어요.");
+
+      selectedPhotos = selectedPhotos.slice(0, 20);
+    }
+
+    renderPhotoPreview();
+
+  });
+
+
+  // ======================================================
+  // 사진 미리보기
+  // ======================================================
+
+  function renderPhotoPreview() {
+
+    preview.innerHTML = "";
+
+    selectedPhotos.forEach(function(file, index) {
+
+      const wrapper = document.createElement("div");
+
+      wrapper.style.position = "relative";
+      wrapper.style.display = "inline-block";
+      wrapper.style.margin = "5px";
+
+      const reader = new FileReader();
+
+      reader.onload = function(e) {
+
+        const img = document.createElement("img");
+
+        img.src = e.target.result;
+
+        img.style.width = "120px";
+        img.style.height = "120px";
+        img.style.objectFit = "cover";
+        img.style.borderRadius = "10px";
+
+
+        // 삭제 버튼
+        const deleteButton = document.createElement("button");
+
+        deleteButton.textContent = "❌";
+        deleteButton.type = "button";
+
+        deleteButton.style.position = "absolute";
+        deleteButton.style.top = "5px";
+        deleteButton.style.right = "5px";
+        deleteButton.style.border = "none";
+        deleteButton.style.borderRadius = "50%";
+        deleteButton.style.background = "white";
+        deleteButton.style.cursor = "pointer";
+        deleteButton.style.width = "28px";
+        deleteButton.style.height = "28px";
+        deleteButton.style.padding = "0";
+
+
+        deleteButton.onclick = function() {
+
+          selectedPhotos.splice(index, 1);
+
+          renderPhotoPreview();
+
+        };
+
+
+        wrapper.appendChild(img);
+        wrapper.appendChild(deleteButton);
+
+        preview.appendChild(wrapper);
+
+      };
+
+      reader.readAsDataURL(file);
+
+    });
+
+
+    photoCount.textContent =
+      `선택된 사진: ${selectedPhotos.length}장`;
+
+  }
+
+
+  renderPhotoPreview();
+
+
+  // ======================================================
+  // 파일 → Base64
+  // ======================================================
+
+  function fileToBase64(file) {
+
+    return new Promise(function(resolve, reject) {
+
+      const reader = new FileReader();
+
+      reader.onload = function() {
+
+        resolve({
+
+          data: reader.result,
+
+          mimeType: file.type || "image/jpeg"
+
+        });
+
+      };
+
+      reader.onerror = function() {
+
+        reject(
+          new Error("사진을 읽을 수 없습니다.")
+        );
+
+      };
+
+      reader.readAsDataURL(file);
+
+    });
+
+  }
+
+
+  // ======================================================
+  // 블로그 생성
+  // ======================================================
+
+  async function generateBlog() {
+
+    const button =
+      document.getElementById("generateButton");
+
+    const status =
+      document.getElementById("status");
+
+
+    // 사진 확인
+    if (!selectedPhotos.length) {
+
+      alert("사진을 최소 1장 이상 넣어주세요.");
+
+      return;
+
+    }
+
+
+    // 버튼 잠금
+    button.disabled = true;
+
+    button.textContent =
+      "⏳ 초안을 생성하고 있습니다...";
+
+
+    status.style.display = "block";
+
+    status.textContent =
+      `📸 사진 ${selectedPhotos.length}장을 준비하고 있어요...`;
+
+
+    try {
+
+      // ==================================================
+      // 사진 변환
+      // ==================================================
+
+      const photos = [];
+
+
+      for (
+        let i = 0;
+        i < selectedPhotos.length;
+        i++
+      ) {
+
+        status.textContent =
+          `📸 사진 준비 중... ${i + 1} / ${selectedPhotos.length}`;
+
+
+        const converted =
+          await fileToBase64(selectedPhotos[i]);
+
+
+        photos.push(converted);
+
+      }
+
+
+      // ==================================================
+      // 입력값 가져오기
+      // ==================================================
+
+      const storeName =
+        document.getElementById("storeName").value.trim();
+
+
+      const location =
+        document.getElementById("location").value.trim();
+
+
+      const visitDate =
+        document.getElementById("visitDate").value;
+
+
+      const memo =
+        document.getElementById("memo").value.trim();
+
+
+      const keywords =
+        document.getElementById("keywords").value.trim();
+
+
+      const minLength =
+        Number(
+          document.getElementById("minLength").value
+        ) || 1800;
+
+
+      // 현재는 별도 매장정보 입력칸이 없으므로 빈 값
+      const storeInfo = "";
+
+
+      // ==================================================
+      // 서버 요청
+      // ==================================================
+
+      status.textContent =
+        "🤖 사진을 분석하고 글을 작성하고 있어요. 잠시만 기다려주세요...";
+
+
+      const response =
+        await fetch("/generate", {
+
+          method: "POST",
+
+          headers: {
+
+            "Content-Type":
+              "application/json"
+
+          },
+
+          body: JSON.stringify({
+
+            storeName: storeName,
+
+            location: location,
+
+            visitDate: visitDate,
+
+            memo: memo,
+
+            keywords: keywords,
+
+            minLength: minLength,
+
+            storeInfo: storeInfo,
+
+            photos: photos
+
+          })
+
+        });
+
+
+      // ==================================================
+      // 서버 응답 확인
+      // ==================================================
+
+      let result;
+
+
+      try {
+
+        result = await response.json();
+
+      } catch (e) {
+
+        throw new Error(
+          "서버에서 정상적인 응답을 받지 못했습니다."
+        );
+
+      }
+
+
+      if (
+        !response.ok ||
+        !result.success
+      ) {
+
+        throw new Error(
+          result.error ||
+          `글 생성에 실패했습니다. (HTTP ${response.status})`
+        );
+
+      }
+
+
+      // ==================================================
+      // 결과 표시
+      // ==================================================
+
+      document.getElementById("resultText").value =
+        result.text || "";
+
+
+      document.getElementById("resultCard").style.display =
+        "block";
+
+
+      status.textContent =
+        "✨ 블로그 초안이 완성됐어요!";
+
+
+      document.getElementById("resultCard").scrollIntoView({
+        behavior: "smooth"
+      });
+
+
+    } catch (error) {
+
+      // ==================================================
+      // 오류 처리
+      // ==================================================
+
+      console.error(
+        "블로그 생성 오류:",
+        error
+      );
+
+
+      const errorMessage =
+        error?.message ||
+        "알 수 없는 오류가 발생했습니다.";
+
+
+      status.style.display =
+        "block";
+
+
+      status.textContent =
+        "❌ " + errorMessage;
+
+
+      alert(
+        "글 생성 중 오류가 발생했습니다.\n\n" +
+        errorMessage
+      );
+
+
+    } finally {
+
+      // ==================================================
+      // 버튼 원상복구
+      // ==================================================
+
+      button.disabled = false;
+
+      button.textContent =
+        "✨ 블로그 초안 생성하기";
+
+    }
+
+  }
+
+
+  // ======================================================
+  // 결과 복사
+  // ======================================================
+
+  async function copyResult() {
+
+    const text =
+      document.getElementById("resultText").value;
+
+
+    if (!text) {
+
+      alert("복사할 글이 없습니다.");
+
+      return;
+
+    }
+
+
+    try {
+
+      await navigator.clipboard.writeText(text);
+
+
+      alert(
+        "글 전체가 복사됐어요! 💕"
+      );
+
+
+    } catch (error) {
+
+      // 클립보드가 안 되는 경우
+      const resultText =
+        document.getElementById("resultText");
+
+      resultText.focus();
+
+      resultText.select();
+
+
+      alert(
+        "자동 복사가 되지 않았어요.\n" +
+        "선택된 글을 Ctrl + C로 복사해주세요."
+      );
+
+    }
+
+  }
+
+</script>
+</body>
+</html>

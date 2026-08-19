@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>잔망차차 블로그 초안 생성기</title>
+
+  <link rel="stylesheet" href="/style.css" />
+</head>
+
+<body>
+
+  <div class="container">
+
+    <header>
+      <div class="logo">✨ 잔망차차 블로그 도우미</div>
+
+      <h1>사진 넣고<br />블로그 글 만들어보기</h1>
+
+      <p>
+        사진과 방문 정보를 넣어주면<br />
+        내 블로그처럼 자연스럽게 초안을 만들어줘요 :)
+      </p>
+    </header>
+
+
+    <main>
+
+      <!-- ==========================================
+           사진
+      =========================================== -->
+
+      <section class="card">
+
+        <h2>📷 사진 올리기</h2>
+
+        <div id="dropZone" class="drop-zone">
+
+          <div class="upload-icon">📸</div>
+
+          <p class="drop-title">
+            사진을 여기에 쏙 넣어주세요
+          </p>
+
+          <p class="drop-subtitle">
+            여러 장을 한꺼번에 올려도 괜찮아요!
+          </p>
+
+          <label
+            for="photoInput"
+            class="upload-button"
+          >
+            사진 선택하기
+          </label>
+
+          <input
+            type="file"
+            id="photoInput"
+            accept="image/*"
+            multiple
+            hidden
+          />
+
+        </div>
+
+
+        <!-- 사진 미리보기 -->
+
+        <div
+          id="preview"
+          class="preview"
+        ></div>
+
+        <p
+          id="photoCount"
+          class="photo-count"
+        ></p>
+
+      </section>
+
+
+      <!-- ==========================================
+           방문 정보
+      =========================================== -->
+
+      <section class="card">
+
+        <h2>📍 방문 정보</h2>
+
+
+        <div class="form-group">
+
+          <label for="storeName">
+            가게 이름
+          </label>
+
+          <input
+            type="text"
+            id="storeName"
+            placeholder="예: 도로시파스타 연정 배곧"
+          />
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label for="location">
+            위치
+          </label>
+
+          <input
+            type="text"
+            id="location"
+            placeholder="예: 시흥시 배곧"
+          />
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label for="visitDate">
+            방문일
+          </label>
+
+          <input
+            type="date"
+            id="visitDate"
+          />
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label for="menu">
+            메뉴 / 가격
+          </label>
+
+          <textarea
+            id="menu"
+            rows="4"
+            placeholder="먹은 메뉴와 가격을 적어주세요.&#10;예: 파스타, 리조또, 스테이크 세트"
+          ></textarea>
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label for="memo">
+            추가 메모
+          </label>
+
+          <textarea
+            id="memo"
+            rows="5"
+            placeholder="맛, 분위기, 주차, 서비스 등 기억나는 내용을 편하게 적어주세요."
+          ></textarea>
+
+        </div>
+
+      </section>
+
+
+      <!-- ==========================================
+           체험단
+      =========================================== -->
+
+      <section class="card">
+
+        <h2>🎁 체험단 정보</h2>
+
+        <div class="experience-options">
+
+          <label class="experience-option">
+
+            <input
+              type="radio"
+              name="experience"
+              value="normal"
+              checked
+            />
+
+            <span>
+              <strong>일반 방문</strong>
+              <small>내돈내산 / 일반 방문 후기</small>
+            </span>
+
+          </label>
+
+
+          <label class="experience-option">
+
+            <input
+              type="radio"
+              name="experience"
+              value="review"
+            />
+
+            <span>
+              <strong>체험단</strong>
+              <small>제공받은 서비스가 있는 후기</small>
+            </span>
+
+          </label>
+
+        </div>
+
+
+        <div
+          id="experienceInfo"
+          class="experience-info hidden"
+        >
+
+          <div class="form-group">
+
+            <label for="provided">
+              제공받은 메뉴 / 서비스
+            </label>
+
+            <input
+              type="text"
+              id="provided"
+              placeholder="예: 파스타 세트 제공"
+            />
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label for="disclosure">
+              체험단 표시 문구
+            </label>
+
+            <input
+              type="text"
+              id="disclosure"
+              placeholder="예: 업체로부터 식사권을 제공받아 작성한 후기입니다."
+            />
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- ==========================================
+           키워드
+      =========================================== -->
+
+      <section class="card">
+
+        <h2>🔎 키워드</h2>
+
+        <p class="section-description">
+          꼭 넣고 싶은 키워드를 적어주세요.<br />
+          글 속에 억지스럽지 않게 자연스럽게 넣어드려요.
+        </p>
+
+
+        <div class="form-group">
+
+          <label for="keywords">
+            필수 키워드
+          </label>
+
+          <input
+            type="text"
+            id="keywords"
+            placeholder="예: 배곧 파스타 맛집, 배곧 데이트, 배곧 맛집"
+          />
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label for="titleKeyword">
+            제목에 넣을 키워드
+          </label>
+
+          <input
+            type="text"
+            id="titleKeyword"
+            placeholder="예: 배곧 파스타 맛집"
+          />
+
+        </div>
+
+      </section>
+
+
+      <!-- ==========================================
+           글 스타일
+      =========================================== -->
+
+      <section class="card">
+
+        <h2>✍️ 글 스타일</h2>
+
+        <p class="section-description">
+          잔망차차처럼 편안하고 실제 방문 후기 같은 느낌으로 작성해요.
+        </p>
+
+
+        <div class="style-options">
+
+          <label class="style-option">
+
+            <input
+              type="radio"
+              name="tone"
+              value="natural"
+              checked
+            />
+
+            <span>
+              <strong>잔망차차 스타일</strong>
+              <small>
+                자연스럽고 친근한 실제 방문 후기
+              </small>
+            </span>
+
+          </label>
+
+
+          <label class="style-option">
+
+            <input
+              type="radio"
+              name="tone"
+              value="friendly"
+            />
+
+            <span>
+              <strong>조금 더 발랄하게</strong>
+              <small>
+                ㅋㅋ, ㅎㅎ 같은 가벼운 리액션을 자연스럽게
+              </small>
+            </span>
+
+          </label>
+
+
+          <label class="style-option">
+
+            <input
+              type="radio"
+              name="tone"
+              value="detailed"
+            />
+
+            <span>
+              <strong>정보를 조금 더 자세하게</strong>
+              <small>
+                메뉴와 공간 정보를 꼼꼼하게
+              </small>
+            </span>
+
+          </label>
+
+        </div>
+
+      </section>
+
+
+      <!-- ==========================================
+           생성
+      =========================================== -->
+
+      <button
+        id="generateButton"
+        class="generate-button"
+      >
+        ✨ 내 스타일로 초안 만들기
+      </button>
+
+
+      <!-- ==========================================
+           결과
+      =========================================== -->
+
+      <section
+        id="resultCard"
+        class="card result-card hidden"
+      >
+
+        <div class="result-header">
+
+          <div>
+            <h2>📝 블로그 초안</h2>
+
+            <p>
+              마음에 드는 부분만 골라서 사용해도 좋아요 :)
+            </p>
+          </div>
+
+
+          <button
+            id="copyButton"
+            class="copy-button"
+          >
+            📋 전체 복사
+          </button>
+
+        </div>
+
+
+        <div
+          id="loading"
+          class="loading hidden"
+        >
+
+          <div class="spinner"></div>
+
+          <p>
+            사진을 살펴보고 글을 쓰는 중이에요...
+          </p>
+
+          <small>
+            조금만 기다려주세요 :)
+          </small>
+
+        </div>
+
+
+        <div
+          id="result"
+          class="result"
+        ></div>
+
+      </section>
+
+    </main>
+
+
+    <footer>
+      <p>
+        잔망차차 Blog Writer
+      </p>
+    </footer>
+
+  </div>
+
+
+  <script src="/script.js"></script>
+
+</body>
+</html>
