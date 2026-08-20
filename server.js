@@ -5,9 +5,7 @@ const path = require("path");
 require("dotenv").config();
 
 const PORT = process.env.PORT || 3000;
-
-const OPENROUTER_API_KEY =
-  process.env.OPENROUTER_API_KEY;
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
 if (!OPENROUTER_API_KEY) {
   console.error("");
@@ -24,34 +22,22 @@ if (!OPENROUTER_API_KEY) {
 
 function readRequestBody(req) {
   return new Promise((resolve, reject) => {
-
     let body = "";
 
     req.on("data", (chunk) => {
-
       body += chunk;
 
       if (body.length > 30 * 1024 * 1024) {
-
-        reject(
-          new Error("업로드 용량이 너무 큽니다.")
-        );
-
+        reject(new Error("업로드 용량이 너무 큽니다."));
         req.destroy();
       }
     });
 
     req.on("end", () => {
-
       try {
-
         resolve(JSON.parse(body));
-
       } catch (error) {
-
-        reject(
-          new Error("잘못된 JSON 데이터입니다.")
-        );
+        reject(new Error("잘못된 JSON 데이터입니다."));
       }
     });
 
@@ -67,8 +53,10 @@ function readRequestBody(req) {
 async function callOpenRouter(messages) {
 
   const requestBody = {
-
-    model: "openai/gpt-oss-20b:free",
+    // 중요:
+    // 이미지가 들어오면 openrouter/free가
+    // 이미지 입력을 지원하는 무료 모델을 자동 선택
+    model: "openrouter/free",
 
     messages,
 
@@ -81,23 +69,18 @@ async function callOpenRouter(messages) {
   console.log("");
   console.log("================================");
   console.log("OpenRouter 요청");
-  console.log("모델:", requestBody.model);
+  console.log("모델: openrouter/free");
   console.log("================================");
 
 
   const response = await fetch(
     "https://openrouter.ai/api/v1/chat/completions",
     {
-
       method: "POST",
 
       headers: {
-
-        "Authorization":
-          `Bearer ${OPENROUTER_API_KEY}`,
-
-        "Content-Type":
-          "application/json",
+        "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+        "Content-Type": "application/json",
 
         "HTTP-Referer":
           "https://blog-writer-42ic.onrender.com",
@@ -106,14 +89,12 @@ async function callOpenRouter(messages) {
           "Janmangchacha Blog Writer"
       },
 
-      body:
-        JSON.stringify(requestBody)
+      body: JSON.stringify(requestBody)
     }
   );
 
 
-  const responseText =
-    await response.text();
+  const responseText = await response.text();
 
 
   if (!response.ok) {
@@ -122,10 +103,7 @@ async function callOpenRouter(messages) {
     console.error("================================");
     console.error("OpenRouter 오류");
     console.error("================================");
-    console.error(
-      "상태 코드:",
-      response.status
-    );
+    console.error("상태 코드:", response.status);
     console.error(responseText);
     console.error("================================");
 
@@ -139,15 +117,11 @@ async function callOpenRouter(messages) {
 
   try {
 
-    result =
-      JSON.parse(responseText);
+    result = JSON.parse(responseText);
 
   } catch (error) {
 
-    console.error(
-      "JSON 파싱 실패:",
-      responseText
-    );
+    console.error(responseText);
 
     throw new Error(
       "AI 응답을 읽을 수 없습니다."
@@ -161,11 +135,13 @@ async function callOpenRouter(messages) {
   console.log("================================");
 
   console.log(
-    JSON.stringify(
-      result,
-      null,
-      2
-    )
+    "사용 모델:",
+    result?.model || "정보 없음"
+  );
+
+  console.log(
+    "종료 이유:",
+    result?.choices?.[0]?.finish_reason || "정보 없음"
   );
 
   console.log("================================");
@@ -181,53 +157,37 @@ async function callOpenRouter(messages) {
     "";
 
 
+  // 일부 모델은 content를 배열로 반환할 수 있음
   if (Array.isArray(text)) {
 
-    text =
-      text
-        .map((item) => {
+    text = text
+      .map((item) => {
 
-          if (
-            typeof item === "string"
-          ) {
-            return item;
-          }
+        if (typeof item === "string") {
+          return item;
+        }
 
-          return item?.text || "";
-        })
-        .join("");
+        return item?.text || "";
+      })
+      .join("");
   }
 
 
-  if (
-    typeof text !== "string"
-  ) {
-
-    text =
-      String(text || "");
+  if (typeof text !== "string") {
+    text = String(text || "");
   }
 
 
-  text =
-    text.trim();
+  text = text.trim();
 
 
   if (!text) {
 
+    console.error("");
+    console.error("AI 응답에 글이 없습니다.");
+    console.error("응답 전체:");
     console.error(
-      "AI 응답에 글이 없습니다."
-    );
-
-    console.error(
-      "응답 전체:"
-    );
-
-    console.error(
-      JSON.stringify(
-        result,
-        null,
-        2
-      )
+      JSON.stringify(result, null, 2)
     );
 
     throw new Error(
@@ -246,18 +206,14 @@ async function callOpenRouter(messages) {
 
 function extractBodyOnly(blogText) {
 
-  let body =
-    blogText || "";
+  let body = blogText || "";
 
 
+  // 해시태그 제거
   const hashtagIndex =
     body.indexOf("#");
 
-
-  if (
-    hashtagIndex !== -1
-  ) {
-
+  if (hashtagIndex !== -1) {
     body =
       body.substring(
         0,
@@ -266,45 +222,21 @@ function extractBodyOnly(blogText) {
   }
 
 
-  const storeInfoIndex =
-    body.indexOf("📍 매장정보");
+  // 매장정보 앞까지 자르는 기존 로직은 제거
+  // 최종 후기와 마지막 인사를 정상적으로
+  // 본문 글자 수에 포함시키기 위해서임
 
 
-  if (
-    storeInfoIndex !== -1
-  ) {
-
-    body =
-      body.substring(
-        0,
-        storeInfoIndex
-      );
-  }
-
-
-  const tipIndex =
-    body.indexOf("💡 방문 꿀팁");
-
-
-  if (
-    tipIndex !== -1
-  ) {
-
-    body =
-      body.substring(
-        0,
-        tipIndex
-      );
-  }
+  // 방문 꿀팁도 본문에 포함
+  // 최종 후기와 마지막 인사까지 모두 포함
 
 
   const lines =
     body.split("\n");
 
 
-  if (
-    lines.length > 1
-  ) {
+  // 첫 줄이 제목이면 제거
+  if (lines.length > 1) {
 
     lines.shift();
 
@@ -356,6 +288,7 @@ function buildInitialPrompt(data) {
 
 없는 사실을 절대로 만들지 않는다.
 
+
 없는 메뉴
 없는 가격
 없는 재료
@@ -371,6 +304,7 @@ function buildInitialPrompt(data) {
 
 등을 절대로 만들어내지 않는다.
 
+
 사진만 보고 확실하지 않은 내용은
 사실처럼 작성하지 않는다.
 
@@ -384,7 +318,9 @@ function buildInitialPrompt(data) {
 따라서 사용자가 입력한 정보가 없는 경우
 임의로 주소나 주차정보를 만들지 않는다.
 
+
 매장정보는 반드시 다음 형식으로 작성한다.
+
 
 📍 매장정보
 
@@ -393,8 +329,10 @@ function buildInitialPrompt(data) {
 🚗 편의시설 :
 🅿️ 주차정보 :
 
+
 확실하지 않은 정보는
 "정보 없음"으로 작성한다.
+
 
 방문일
 메뉴
@@ -412,6 +350,7 @@ AI가 작성한 딱딱한 문장처럼 쓰지 않는다.
 실제로 네이버 블로그를 작성하는 사람처럼
 자연스럽고 친근하게 작성한다.
 
+
 자연스럽게 다음 표현을 섞는다.
 
 ~더라고요
@@ -426,6 +365,12 @@ AI가 작성한 딱딱한 문장처럼 쓰지 않는다.
 💖
 
 같은 표현을 계속 반복하지 않는다.
+
+
+너무 과장된 광고문구처럼 쓰지 않는다.
+
+실제 블로그 후기처럼
+말하듯 자연스럽게 작성한다.
 
 
 ======================================================
@@ -447,6 +392,7 @@ AI가 작성한 딱딱한 문장처럼 쓰지 않는다.
 
 느낌으로 시작한다.
 
+
 사용자가 제공하지 않은
 동행인이나 방문 목적은 만들지 않는다.
 
@@ -459,6 +405,7 @@ AI가 작성한 딱딱한 문장처럼 쓰지 않는다.
 
 가능하면 2,000~2,500자 정도 작성한다.
 
+
 같은 말을 반복해서 억지로 늘리지 않는다.
 
 
@@ -467,6 +414,7 @@ AI가 작성한 딱딱한 문장처럼 쓰지 않는다.
 ======================================================
 
 반드시 다음 순서를 따른다.
+
 
 1. 제목
 
@@ -501,6 +449,7 @@ AI가 작성한 딱딱한 문장처럼 쓰지 않는다.
 
 메뉴마다 별도의 소제목을 사용한다.
 
+
 각 메뉴마다 가능한 범위에서
 
 음식 비주얼
@@ -514,6 +463,7 @@ AI가 작성한 딱딱한 문장처럼 쓰지 않는다.
 
 등을 자연스럽게 설명한다.
 
+
 확실하지 않은 정보는 만들지 않는다.
 
 
@@ -523,7 +473,11 @@ AI가 작성한 딱딱한 문장처럼 쓰지 않는다.
 
 확실한 정보만 작성한다.
 
-정보가 없으면 억지로 작성하지 않는다.
+정보가 없으면
+
+"정보 없음"
+
+이라고 작성한다.
 
 
 ======================================================
@@ -558,6 +512,7 @@ AI가 작성한 딱딱한 문장처럼 쓰지 않는다.
 
 등을 활용한다.
 
+
 단순히 메뉴를 다시 나열하지 않는다.
 
 
@@ -567,6 +522,7 @@ AI가 작성한 딱딱한 문장처럼 쓰지 않는다.
 
 최종 후기 다음에는
 잔망차차 특유의 인사를 3~5줄 작성한다.
+
 
 따뜻하고 자연스럽게 마무리한다.
 
@@ -624,6 +580,12 @@ ${disclosure || "정보 없음"}
 위 정보를 이용해서
 완성된 네이버 맛집 블로그 글을 작성한다.
 
+사진이 제공되었다면
+사진에서 명확하게 확인되는 정보만 활용한다.
+
+사진에서 확실하지 않은 것은
+추측하지 않는다.
+
 설명하지 않는다.
 
 URL이나 출처를 작성하지 않는다.
@@ -645,6 +607,10 @@ async function generateBlogPost(data) {
   } = data;
 
 
+  // ====================================================
+  // 이미지 준비
+  // ====================================================
+
   const imageContents =
     Array.isArray(images)
 
@@ -661,6 +627,7 @@ async function generateBlogPost(data) {
             image_url: {
               url: image
             }
+
           }))
 
       : [];
@@ -670,6 +637,12 @@ async function generateBlogPost(data) {
   console.log("================================");
   console.log("AI 블로그 글 생성 시작");
   console.log("================================");
+
+  console.log(
+    "첨부 이미지:",
+    imageContents.length
+  );
+
   console.log("");
 
 
@@ -677,12 +650,38 @@ async function generateBlogPost(data) {
     buildInitialPrompt(data);
 
 
+  // ====================================================
+  // 이미지가 있으면 text + image
+  // 이미지가 없으면 text만
+  // ====================================================
+
+  let userContent;
+
+
+  if (imageContents.length > 0) {
+
+    userContent = [
+
+      {
+        type: "text",
+        text: initialPrompt
+      },
+
+      ...imageContents
+
+    ];
+
+  } else {
+
+    userContent = initialPrompt;
+  }
+
+
   const initialMessages = [
 
     {
       role: "user",
-
-      content: initialPrompt
+      content: userContent
     }
 
   ];
@@ -721,17 +720,26 @@ async function generateBlogPost(data) {
     attempt++;
 
 
+    console.log("");
+    console.log(
+      `본문 부족 → ${attempt}차 보완 요청`
+    );
+
+
     const expandPrompt = `
 
 아래 블로그 글을
 잔망차차 스타일로 자연스럽게 보완해줘.
 
+
 반드시 실제 본문 1,800자 이상 작성한다.
 
 가능하면 2,000~2,500자로 작성한다.
 
+
 기존 글과 사용자 정보에 없는
 새로운 사실을 만들지 않는다.
+
 
 없는 메뉴
 없는 가격
@@ -743,8 +751,24 @@ async function generateBlogPost(data) {
 
 등을 만들지 않는다.
 
+
 기존 글의 제목부터 해시태그까지
 전체 글을 다시 출력한다.
+
+
+특히 다음 부분을 충분히 작성한다.
+
+- 자연스러운 도입부
+- 매장 분위기
+- 메뉴 소개
+- 각 메뉴의 실제 후기
+- 방문 꿀팁
+- 한줄평
+- 좋았던 점
+- 매장정보
+- 최종 후기 2~3문단
+- 잔망차차 마지막 인사
+
 
 현재 글:
 
@@ -754,31 +778,44 @@ ${text}
 
 --------------------------------
 
+
 현재 본문 글자 수:
 
 ${bodyText.length}
+
 
 설명 없이 완성된 글만 출력한다.
 
 `;
 
 
+    let expandContent;
+
+
+    if (imageContents.length > 0) {
+
+      expandContent = [
+
+        {
+          type: "text",
+          text: expandPrompt
+        },
+
+        ...imageContents
+
+      ];
+
+    } else {
+
+      expandContent = expandPrompt;
+    }
+
+
     const expandMessages = [
 
       {
         role: "user",
-
-        content: [
-
-          {
-            type: "text",
-
-            text: expandPrompt
-          },
-
-          ...imageContents
-
-        ]
+        content: expandContent
       }
 
     ];
@@ -840,15 +877,12 @@ const server =
 
           console.log(
             "매장명:",
-            data.storeName ||
-            "정보 없음"
+            data.storeName || "정보 없음"
           );
 
 
           const text =
-            await generateBlogPost(
-              data
-            );
+            await generateBlogPost(data);
 
 
           res.writeHead(
@@ -890,11 +924,9 @@ const server =
 
           res.end(
             JSON.stringify({
-
               error:
                 error.message ||
                 "글 생성 중 오류가 발생했습니다."
-
             })
           );
         }
@@ -1057,7 +1089,7 @@ const server =
 
 
       // ==================================================
-      // 없는 페이지
+      // 404
       // ==================================================
 
       res.writeHead(
@@ -1072,7 +1104,6 @@ const server =
       res.end(
         "페이지를 찾을 수 없습니다."
       );
-
     }
   );
 
@@ -1086,23 +1117,14 @@ server.listen(
   () => {
 
     console.log("");
-
-    console.log(
-      "================================"
-    );
-
+    console.log("================================");
     console.log(
       "블로그 초안 생성기가 실행되었습니다."
     );
-
     console.log(
       `포트: ${PORT}`
     );
-
-    console.log(
-      "================================"
-    );
-
+    console.log("================================");
     console.log("");
   }
 );
