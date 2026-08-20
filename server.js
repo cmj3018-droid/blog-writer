@@ -111,45 +111,45 @@ async function callOpenRouter(messages) {
     );
   }
 
+const message =
+  result?.choices?.[0]?.message;
 
-  const message =
-    result?.choices?.[0]?.message;
+let text =
+  message?.content ||
+  result?.choices?.[0]?.text ||
+  "";
 
+if (Array.isArray(text)) {
+  text = text
+    .map((item) => {
+      if (typeof item === "string") {
+        return item;
+      }
 
-  let text =
-    message?.content;
-
-
-  if (Array.isArray(text)) {
-
-    text = text
-      .map((item) => {
-
-        if (typeof item === "string") {
-          return item;
-        }
-
-        return item?.text || "";
-      })
-      .join("");
-  }
-
-
-  if (!text) {
-
-    console.error(
-      JSON.stringify(result, null, 2)
-    );
-
-    throw new Error(
-      "AI가 글을 생성하지 못했습니다."
-    );
-  }
-
-
-  return text.trim();
+      return item?.text || "";
+    })
+    .join("");
 }
 
+if (!text) {
+  console.error(
+    "AI 응답에 글이 없습니다:"
+  );
+
+  console.error(
+    JSON.stringify(
+      result,
+      null,
+      2
+    )
+  );
+
+  throw new Error(
+    "AI가 글을 생성하지 못했습니다."
+  );
+}
+
+return text.trim();
 
 // ======================================================
 // 본문 글자 수
