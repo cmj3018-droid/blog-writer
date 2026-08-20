@@ -50,17 +50,19 @@ function readRequestBody(req) {
 
 async function callOpenRouter(messages) {
 
-  const requestBody = {
-    // 무료 모델
-    model: "openrouter/free",
+const requestBody = {
+  model: "openai/gpt-oss-20b:free",
 
-    messages,
+  messages,
 
-    temperature: 0.7,
+  temperature: 0.7,
 
-    max_tokens: 10000
-  };
+  max_tokens: 12000,
 
+  reasoning: {
+    effort: "low"
+  }
+};
 
   const response = await fetch(
     "https://openrouter.ai/api/v1/chat/completions",
