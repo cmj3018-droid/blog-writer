@@ -110,6 +110,11 @@ async function callOpenRouter(messages) {
       "AI 응답을 읽을 수 없습니다."
     );
   }
+console.log("================================");
+console.log("OpenRouter 실제 응답 확인");
+console.log("================================");
+console.log(JSON.stringify(result, null, 2));
+console.log("================================");
 
 const message =
   result?.choices?.[0]?.message;
@@ -131,25 +136,24 @@ if (Array.isArray(text)) {
     .join("");
 }
 
-if (!text) {
-  console.error(
-    "AI 응답에 글이 없습니다:"
-  );
+if (typeof text !== "string") {
+  text = String(text || "");
+}
 
-  console.error(
-    JSON.stringify(
-      result,
-      null,
-      2
-    )
-  );
+text = text.trim();
+
+if (!text) {
+  console.error("AI 응답에 글이 없습니다.");
+  console.error("응답 전체:");
+  console.error(JSON.stringify(result, null, 2));
 
   throw new Error(
-    "AI가 글을 생성하지 못했습니다."
+    "AI 응답은 받았지만 글 내용이 없습니다."
   );
 }
 
-return text.trim();
+return text;
+
 }
 
 // ======================================================
@@ -574,21 +578,13 @@ async function generateBlogPost(data) {
     buildInitialPrompt(data);
 
 
-  const initialMessages = [
-    {
-      role: "user",
+const initialMessages = [
+  {
+    role: "user",
 
-      content: [
-        {
-          type: "text",
-          text: initialPrompt
-        },
-
-        ...imageContents
-      ]
-    }
-  ];
-
+    content: initialPrompt
+  }
+];
 
   let text =
     await callOpenRouter(
