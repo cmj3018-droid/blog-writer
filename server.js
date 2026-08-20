@@ -5,13 +5,22 @@ const path = require("path");
 require("dotenv").config();
 
 const PORT = process.env.PORT || 3000;
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+
+const OPENROUTER_API_KEY =
+  process.env.OPENROUTER_API_KEY;
+
+
+// ======================================================
+// 기본 확인
+// ======================================================
 
 if (!OPENROUTER_API_KEY) {
+
   console.error("");
   console.error("================================");
   console.error("OPENROUTER_API_KEY가 없습니다.");
   console.error("================================");
+
   process.exit(1);
 }
 
@@ -21,27 +30,54 @@ if (!OPENROUTER_API_KEY) {
 // ======================================================
 
 function readRequestBody(req) {
+
   return new Promise((resolve, reject) => {
+
     let body = "";
 
+
     req.on("data", (chunk) => {
+
       body += chunk;
 
-      if (body.length > 30 * 1024 * 1024) {
-        reject(new Error("업로드 용량이 너무 큽니다."));
+
+      if (
+        body.length >
+        30 * 1024 * 1024
+      ) {
+
+        reject(
+          new Error(
+            "업로드 용량이 너무 큽니다."
+          )
+        );
+
         req.destroy();
       }
     });
 
+
     req.on("end", () => {
+
       try {
-        resolve(JSON.parse(body));
+
+        resolve(
+          JSON.parse(body)
+        );
+
       } catch (error) {
-        reject(new Error("잘못된 JSON 데이터입니다."));
+
+        reject(
+          new Error(
+            "잘못된 JSON 데이터입니다."
+          )
+        );
       }
     });
 
+
     req.on("error", reject);
+
   });
 }
 
@@ -53,9 +89,9 @@ function readRequestBody(req) {
 async function callOpenRouter(messages) {
 
   const requestBody = {
-    // 중요:
-    // 이미지가 들어오면 openrouter/free가
-    // 이미지 입력을 지원하는 무료 모델을 자동 선택
+
+    // 이미지가 있는 경우에도
+    // 지원 가능한 무료 모델을 자동 선택
     model: "openrouter/free",
 
     messages,
@@ -70,32 +106,95 @@ async function callOpenRouter(messages) {
   console.log("================================");
   console.log("OpenRouter 요청");
   console.log("모델: openrouter/free");
+  console.log(
+    "메시지 개수:",
+    messages.length
+  );
+  console.log(
+    "이미지 포함:",
+    messages.some(
+      (message) =>
+        Array.isArray(message.content)
+    )
+  );
   console.log("================================");
 
 
-  const response = await fetch(
-    "https://openrouter.ai/api/v1/chat/completions",
-    {
-      method: "POST",
+  let response;
 
-      headers: {
-        "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
 
-        "HTTP-Referer":
-          "https://blog-writer-42ic.onrender.com",
+  try {
 
-        "X-Title":
-          "Janmangchacha Blog Writer"
-      },
+    response = await fetch(
+      "https://openrouter.ai/api/v1/chat/completions",
+      {
 
-      body: JSON.stringify(requestBody)
-    }
+        method: "POST",
+
+        headers: {
+
+          "Authorization":
+            `Bearer ${OPENROUTER_API_KEY}`,
+
+          "Content-Type":
+            "application/json",
+
+          "HTTP-Referer":
+            "https://blog-writer-42ic.onrender.com",
+
+          "X-Title":
+            "Janmangchacha Blog Writer"
+        },
+
+        body:
+          JSON.stringify(
+            requestBody
+          )
+      }
+    );
+
+  } catch (error) {
+
+    console.error("");
+    console.error("================================");
+    console.error("OpenRouter 연결 실패");
+    console.error("================================");
+
+    console.error(error);
+
+    throw new Error(
+      "OpenRouter 서버에 연결하지 못했습니다."
+    );
+  }
+
+
+  const responseText =
+    await response.text();
+
+
+  console.log("");
+  console.log("================================");
+  console.log("OpenRouter 응답");
+  console.log("================================");
+
+  console.log(
+    "상태 코드:",
+    response.status
   );
 
+  console.log(
+    "Content-Type:",
+    response.headers.get(
+      "content-type"
+    )
+  );
 
-  const responseText = await response.text();
+  console.log("================================");
 
+
+  // ====================================================
+  // HTTP 오류
+  // ====================================================
 
   if (!response.ok) {
 
@@ -103,31 +202,101 @@ async function callOpenRouter(messages) {
     console.error("================================");
     console.error("OpenRouter 오류");
     console.error("================================");
-    console.error("상태 코드:", response.status);
-    console.error(responseText);
-    console.error("================================");
+
+    console.error(
+      "상태 코드:",
+      response.status
+    );
+
+    console.error(
+      responseText
+    );
+
+    console.error(
+      "================================"
+    );
+
 
     throw new Error(
-      `AI 요청 실패 (${response.status})`
+      `AI 요청 실패 (${response.status}): ${responseText}`
     );
   }
 
+
+  // ====================================================
+  // JSON 파싱
+  // ====================================================
 
   let result;
 
+
   try {
 
-    result = JSON.parse(responseText);
+    result =
+      JSON.parse(
+        responseText
+      );
 
   } catch (error) {
 
-    console.error(responseText);
+    console.error("");
+    console.error("================================");
+    console.error("OpenRouter JSON 파싱 실패");
+    console.error("================================");
+
+    console.error(
+      "받은 응답:"
+    );
+
+    console.error(
+      responseText
+    );
+
+    console.error(
+      "================================"
+    );
+
 
     throw new Error(
-      "AI 응답을 읽을 수 없습니다."
+      "OpenRouter에서 JSON이 아닌 응답을 받았습니다."
     );
   }
 
+
+  // ====================================================
+  // API 오류 확인
+  // ====================================================
+
+  if (result.error) {
+
+    console.error("");
+    console.error("================================");
+    console.error("OpenRouter API 오류");
+    console.error("================================");
+
+    console.error(
+      JSON.stringify(
+        result.error,
+        null,
+        2
+      )
+    );
+
+    console.error(
+      "================================"
+    );
+
+
+    throw new Error(
+      result.error.message ||
+      "OpenRouter API 오류가 발생했습니다."
+    );
+  }
+
+
+  // ====================================================
+  // 실제 응답 확인
+  // ====================================================
 
   console.log("");
   console.log("================================");
@@ -136,64 +305,164 @@ async function callOpenRouter(messages) {
 
   console.log(
     "사용 모델:",
-    result?.model || "정보 없음"
+    result?.model ||
+    "정보 없음"
   );
 
   console.log(
     "종료 이유:",
-    result?.choices?.[0]?.finish_reason || "정보 없음"
+    result?.choices?.[0]?.finish_reason ||
+    "정보 없음"
   );
 
   console.log("================================");
 
 
+  const choice =
+    result?.choices?.[0];
+
+
   const message =
-    result?.choices?.[0]?.message;
+    choice?.message;
 
 
   let text =
     message?.content ||
-    result?.choices?.[0]?.text ||
+    choice?.text ||
     "";
 
 
-  // 일부 모델은 content를 배열로 반환할 수 있음
+  // ====================================================
+  // content 배열 처리
+  // ====================================================
+
   if (Array.isArray(text)) {
 
-    text = text
-      .map((item) => {
+    text =
+      text
+        .map((item) => {
 
-        if (typeof item === "string") {
-          return item;
-        }
+          if (
+            typeof item ===
+            "string"
+          ) {
 
-        return item?.text || "";
-      })
-      .join("");
+            return item;
+          }
+
+
+          if (
+            item &&
+            typeof item.text ===
+            "string"
+          ) {
+
+            return item.text;
+          }
+
+
+          return "";
+
+        })
+        .join("");
   }
 
 
-  if (typeof text !== "string") {
-    text = String(text || "");
+  // ====================================================
+  // 문자열 변환
+  // ====================================================
+
+  if (
+    typeof text !==
+    "string"
+  ) {
+
+    text =
+      String(
+        text || ""
+      );
   }
 
 
-  text = text.trim();
+  text =
+    text.trim();
 
+
+  // ====================================================
+  // 글 내용이 없는 경우
+  // ====================================================
 
   if (!text) {
 
     console.error("");
+    console.error("================================");
     console.error("AI 응답에 글이 없습니다.");
-    console.error("응답 전체:");
+    console.error("================================");
+
     console.error(
-      JSON.stringify(result, null, 2)
+      "사용 모델:",
+      result?.model ||
+      "정보 없음"
     );
+
+    console.error(
+      "finish_reason:",
+      choice?.finish_reason ||
+      "정보 없음"
+    );
+
+    console.error(
+      "message:"
+    );
+
+    console.error(
+      JSON.stringify(
+        message,
+        null,
+        2
+      )
+    );
+
+    console.error(
+      "전체 응답:"
+    );
+
+    console.error(
+      JSON.stringify(
+        result,
+        null,
+        2
+      )
+    );
+
+    console.error(
+      "================================"
+    );
+
 
     throw new Error(
       "AI 응답은 받았지만 글 내용이 없습니다."
     );
   }
+
+
+  console.log("");
+  console.log("================================");
+  console.log("AI 글 생성 성공");
+  console.log("================================");
+
+  console.log(
+    "사용 모델:",
+    result?.model ||
+    "정보 없음"
+  );
+
+  console.log(
+    "글자 수:",
+    text.length
+  );
+
+  console.log("================================");
 
 
   return text;
@@ -206,14 +475,19 @@ async function callOpenRouter(messages) {
 
 function extractBodyOnly(blogText) {
 
-  let body = blogText || "";
+  let body =
+    blogText || "";
 
 
-  // 해시태그 제거
+  // 해시태그 이후 제거
   const hashtagIndex =
     body.indexOf("#");
 
-  if (hashtagIndex !== -1) {
+
+  if (
+    hashtagIndex !== -1
+  ) {
+
     body =
       body.substring(
         0,
@@ -222,21 +496,14 @@ function extractBodyOnly(blogText) {
   }
 
 
-  // 매장정보 앞까지 자르는 기존 로직은 제거
-  // 최종 후기와 마지막 인사를 정상적으로
-  // 본문 글자 수에 포함시키기 위해서임
-
-
-  // 방문 꿀팁도 본문에 포함
-  // 최종 후기와 마지막 인사까지 모두 포함
-
-
   const lines =
     body.split("\n");
 
 
-  // 첫 줄이 제목이면 제거
-  if (lines.length > 1) {
+  // 첫 줄은 제목
+  if (
+    lines.length > 1
+  ) {
 
     lines.shift();
 
@@ -256,17 +523,29 @@ function extractBodyOnly(blogText) {
 function buildInitialPrompt(data) {
 
   const {
+
     storeName,
+
     location,
+
     visitDate,
+
     menu,
+
     memo,
+
     keywords,
+
     titleKeyword,
+
     tone,
+
     experience,
+
     provided,
+
     disclosure
+
   } = data;
 
 
@@ -309,13 +588,17 @@ function buildInitialPrompt(data) {
 사실처럼 작성하지 않는다.
 
 
+확실하지 않은 정보는
+"정보 없음"이라고 작성한다.
+
+
 ======================================================
 ★ 매장정보
 ======================================================
 
 웹 검색 기능은 사용하지 않는다.
 
-따라서 사용자가 입력한 정보가 없는 경우
+사용자가 입력한 정보가 없는 경우
 임의로 주소나 주차정보를 만들지 않는다.
 
 
@@ -364,10 +647,11 @@ AI가 작성한 딱딱한 문장처럼 쓰지 않는다.
 💕
 💖
 
+
 같은 표현을 계속 반복하지 않는다.
 
 
-너무 과장된 광고문구처럼 쓰지 않는다.
+너무 광고문구처럼 쓰지 않는다.
 
 실제 블로그 후기처럼
 말하듯 자연스럽게 작성한다.
@@ -474,10 +758,7 @@ AI가 작성한 딱딱한 문장처럼 쓰지 않는다.
 확실한 정보만 작성한다.
 
 정보가 없으면
-
-"정보 없음"
-
-이라고 작성한다.
+"정보 없음"이라고 작성한다.
 
 
 ======================================================
@@ -502,6 +783,7 @@ AI가 작성한 딱딱한 문장처럼 쓰지 않는다.
 매장정보 바로 아래에 작성한다.
 
 최소 2~3개의 자연스러운 문단으로 작성한다.
+
 
 전체적인 음식 만족도
 가장 기억에 남았던 메뉴
@@ -542,32 +824,42 @@ AI가 작성한 딱딱한 문장처럼 쓰지 않는다.
 매장명:
 ${storeName || "정보 없음"}
 
+
 위치:
 ${location || "정보 없음"}
+
 
 방문일:
 ${visitDate || "정보 없음"}
 
+
 메뉴:
 ${menu || "정보 없음"}
+
 
 메모:
 ${memo || "정보 없음"}
 
+
 키워드:
 ${keywords || "정보 없음"}
+
 
 제목 키워드:
 ${titleKeyword || "정보 없음"}
 
+
 말투:
 ${tone || "잔망차차 스타일"}
+
 
 경험:
 ${experience || "정보 없음"}
 
+
 제공 정보:
 ${provided || "정보 없음"}
+
 
 협찬/고지:
 ${disclosure || "정보 없음"}
@@ -580,15 +872,20 @@ ${disclosure || "정보 없음"}
 위 정보를 이용해서
 완성된 네이버 맛집 블로그 글을 작성한다.
 
+
 사진이 제공되었다면
 사진에서 명확하게 확인되는 정보만 활용한다.
+
 
 사진에서 확실하지 않은 것은
 추측하지 않는다.
 
+
 설명하지 않는다.
 
+
 URL이나 출처를 작성하지 않는다.
+
 
 완성된 블로그 글만 출력한다.
 
@@ -615,20 +912,29 @@ async function generateBlogPost(data) {
     Array.isArray(images)
 
       ? images
+
           .filter(
             (image) =>
-              typeof image === "string" &&
+              typeof image ===
+              "string" &&
               image.trim()
           )
-          .map((image) => ({
 
-            type: "image_url",
+          .map(
+            (image) => ({
 
-            image_url: {
-              url: image
-            }
+              type:
+                "image_url",
 
-          }))
+              image_url: {
+
+                url:
+                  image
+
+              }
+
+            })
+          )
 
       : [];
 
@@ -646,25 +952,35 @@ async function generateBlogPost(data) {
   console.log("");
 
 
+  // ====================================================
+  // 프롬프트
+  // ====================================================
+
   const initialPrompt =
     buildInitialPrompt(data);
 
 
   // ====================================================
-  // 이미지가 있으면 text + image
-  // 이미지가 없으면 text만
+  // 이미지가 있는 경우
   // ====================================================
 
   let userContent;
 
 
-  if (imageContents.length > 0) {
+  if (
+    imageContents.length > 0
+  ) {
 
     userContent = [
 
       {
-        type: "text",
-        text: initialPrompt
+
+        type:
+          "text",
+
+        text:
+          initialPrompt
+
       },
 
       ...imageContents
@@ -673,19 +989,29 @@ async function generateBlogPost(data) {
 
   } else {
 
-    userContent = initialPrompt;
+    userContent =
+      initialPrompt;
   }
 
 
   const initialMessages = [
 
     {
-      role: "user",
-      content: userContent
+
+      role:
+        "user",
+
+      content:
+        userContent
+
     }
 
   ];
 
+
+  // ====================================================
+  // 1차 생성
+  // ====================================================
 
   let text =
     await callOpenRouter(
@@ -704,17 +1030,21 @@ async function generateBlogPost(data) {
 
 
   // ====================================================
-  // 글자 수 부족하면 보완
+  // 부족하면 보완
   // ====================================================
 
   let attempt = 0;
 
-  const maxAttempts = 3;
+  const maxAttempts = 2;
 
 
   while (
+
     bodyText.length < 1800 &&
-    attempt < maxAttempts
+
+    attempt <
+      maxAttempts
+
   ) {
 
     attempt++;
@@ -722,7 +1052,7 @@ async function generateBlogPost(data) {
 
     console.log("");
     console.log(
-      `본문 부족 → ${attempt}차 보완 요청`
+      `${attempt}차 보완 요청`
     );
 
 
@@ -756,18 +1086,27 @@ async function generateBlogPost(data) {
 전체 글을 다시 출력한다.
 
 
-특히 다음 부분을 충분히 작성한다.
+특히 다음 내용을 충분히 작성한다.
 
-- 자연스러운 도입부
-- 매장 분위기
-- 메뉴 소개
-- 각 메뉴의 실제 후기
-- 방문 꿀팁
-- 한줄평
-- 좋았던 점
-- 매장정보
-- 최종 후기 2~3문단
-- 잔망차차 마지막 인사
+자연스러운 도입부
+
+매장 분위기
+
+메뉴 소개
+
+각 메뉴의 실제 후기
+
+방문 꿀팁
+
+한줄평
+
+좋았던 점
+
+매장정보
+
+최종 후기
+
+잔망차차 마지막 인사
 
 
 현재 글:
@@ -792,13 +1131,20 @@ ${bodyText.length}
     let expandContent;
 
 
-    if (imageContents.length > 0) {
+    if (
+      imageContents.length > 0
+    ) {
 
       expandContent = [
 
         {
-          type: "text",
-          text: expandPrompt
+
+          type:
+            "text",
+
+          text:
+            expandPrompt
+
         },
 
         ...imageContents
@@ -807,15 +1153,21 @@ ${bodyText.length}
 
     } else {
 
-      expandContent = expandPrompt;
+      expandContent =
+        expandPrompt;
     }
 
 
     const expandMessages = [
 
       {
-        role: "user",
-        content: expandContent
+
+        role:
+          "user",
+
+        content:
+          expandContent
+
       }
 
     ];
@@ -835,8 +1187,11 @@ ${bodyText.length}
       text =
         expandedText.trim();
 
+
       bodyText =
-        extractBodyOnly(text);
+        extractBodyOnly(
+          text
+        );
     }
 
 
@@ -865,38 +1220,53 @@ const server =
       // ==================================================
 
       if (
-        req.url === "/api/generate" &&
-        req.method === "POST"
+
+        req.url ===
+          "/api/generate" &&
+
+        req.method ===
+          "POST"
+
       ) {
 
         try {
 
           const data =
-            await readRequestBody(req);
+            await readRequestBody(
+              req
+            );
 
 
+          console.log("");
           console.log(
             "매장명:",
-            data.storeName || "정보 없음"
+            data.storeName ||
+              "정보 없음"
           );
 
 
           const text =
-            await generateBlogPost(data);
+            await generateBlogPost(
+              data
+            );
 
 
           res.writeHead(
             200,
             {
+
               "Content-Type":
                 "application/json; charset=utf-8"
+
             }
           );
 
 
           res.end(
             JSON.stringify({
+
               text
+
             })
           );
 
@@ -904,32 +1274,47 @@ const server =
         } catch (error) {
 
           console.error("");
-          console.error("================================");
-          console.error("글 생성 오류");
-          console.error("================================");
+          console.error(
+            "================================"
+          );
+          console.error(
+            "글 생성 오류"
+          );
+          console.error(
+            "================================"
+          );
 
-          console.error(error);
+          console.error(
+            error
+          );
 
-          console.error("================================");
+          console.error(
+            "================================"
+          );
 
 
           res.writeHead(
             500,
             {
+
               "Content-Type":
                 "application/json; charset=utf-8"
+
             }
           );
 
 
           res.end(
             JSON.stringify({
+
               error:
                 error.message ||
                 "글 생성 중 오류가 발생했습니다."
+
             })
           );
         }
+
 
         return;
       }
@@ -940,30 +1325,44 @@ const server =
       // ==================================================
 
       if (
+
         req.url === "/" &&
+
         req.method === "GET"
+
       ) {
 
         const filePath =
           path.join(
+
             __dirname,
+
             "public",
+
             "index.html"
+
           );
 
 
         fs.readFile(
+
           filePath,
+
           "utf8",
-          (err, data) => {
+
+          (err, fileData) => {
 
             if (err) {
 
-              res.writeHead(500);
+              res.writeHead(
+                500
+              );
+
 
               res.end(
                 "index.html을 찾을 수 없습니다."
               );
+
 
               return;
             }
@@ -972,15 +1371,21 @@ const server =
             res.writeHead(
               200,
               {
+
                 "Content-Type":
                   "text/html; charset=utf-8"
+
               }
             );
 
 
-            res.end(data);
+            res.end(
+              fileData
+            );
           }
+
         );
+
 
         return;
       }
@@ -991,30 +1396,46 @@ const server =
       // ==================================================
 
       if (
-        req.url === "/style.css" &&
-        req.method === "GET"
+
+        req.url ===
+          "/style.css" &&
+
+        req.method ===
+          "GET"
+
       ) {
 
         const filePath =
           path.join(
+
             __dirname,
+
             "public",
+
             "style.css"
+
           );
 
 
         fs.readFile(
+
           filePath,
+
           "utf8",
-          (err, data) => {
+
+          (err, fileData) => {
 
             if (err) {
 
-              res.writeHead(404);
+              res.writeHead(
+                404
+              );
+
 
               res.end(
                 "CSS 파일을 찾을 수 없습니다."
               );
+
 
               return;
             }
@@ -1023,15 +1444,21 @@ const server =
             res.writeHead(
               200,
               {
+
                 "Content-Type":
                   "text/css; charset=utf-8"
+
               }
             );
 
 
-            res.end(data);
+            res.end(
+              fileData
+            );
           }
+
         );
+
 
         return;
       }
@@ -1042,30 +1469,46 @@ const server =
       // ==================================================
 
       if (
-        req.url === "/script.js" &&
-        req.method === "GET"
+
+        req.url ===
+          "/script.js" &&
+
+        req.method ===
+          "GET"
+
       ) {
 
         const filePath =
           path.join(
+
             __dirname,
+
             "public",
+
             "script.js"
+
           );
 
 
         fs.readFile(
+
           filePath,
+
           "utf8",
-          (err, data) => {
+
+          (err, fileData) => {
 
             if (err) {
 
-              res.writeHead(404);
+              res.writeHead(
+                404
+              );
+
 
               res.end(
                 "JavaScript 파일을 찾을 수 없습니다."
               );
+
 
               return;
             }
@@ -1074,15 +1517,21 @@ const server =
             res.writeHead(
               200,
               {
+
                 "Content-Type":
                   "application/javascript; charset=utf-8"
+
               }
             );
 
 
-            res.end(data);
+            res.end(
+              fileData
+            );
           }
+
         );
+
 
         return;
       }
@@ -1095,8 +1544,10 @@ const server =
       res.writeHead(
         404,
         {
+
           "Content-Type":
             "text/plain; charset=utf-8"
+
         }
       );
 
@@ -1104,6 +1555,7 @@ const server =
       res.end(
         "페이지를 찾을 수 없습니다."
       );
+
     }
   );
 
@@ -1113,18 +1565,30 @@ const server =
 // ======================================================
 
 server.listen(
+
   PORT,
+
   () => {
 
     console.log("");
-    console.log("================================");
+    console.log(
+      "================================"
+    );
+
     console.log(
       "블로그 초안 생성기가 실행되었습니다."
     );
+
     console.log(
       `포트: ${PORT}`
     );
-    console.log("================================");
+
+    console.log(
+      "================================"
+    );
+
     console.log("");
+
   }
+
 );
