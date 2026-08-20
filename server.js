@@ -52,7 +52,7 @@ async function callOpenRouter(messages) {
 
   const requestBody = {
     // 무료 모델
-    model: "google/gemma-3-27b-it:free",
+    model: "openrouter/free",
 
     messages,
 
